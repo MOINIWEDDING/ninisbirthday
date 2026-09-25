@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Invitation } from "@/components/invite/Invitation";
 import { EVENT } from "@/lib/event";
 import { getGuestByCode } from "@/lib/store";
+import { getBoardPins } from "@/lib/pinterest";
 import { toPublic } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
@@ -28,6 +29,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
 export default async function GuestInvite({ params }: Props) {
   const { code } = await params;
-  const guest = await load(code);
-  return <Invitation guest={guest ? toPublic(guest) : null} invalidCode={!guest} />;
+  const [guest, pins] = await Promise.all([load(code), getBoardPins()]);
+  return <Invitation guest={guest ? toPublic(guest) : null} invalidCode={!guest} pins={pins} />;
 }

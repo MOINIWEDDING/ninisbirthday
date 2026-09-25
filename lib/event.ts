@@ -66,3 +66,16 @@ export function buildIcs(url: string) {
 export const GUEST_LIMIT = 20;
 /** A partir de cuántas personas salta el aviso */
 export const GUEST_WARN_AT = GUEST_LIMIT - 2;
+
+/** Código de vestimenta + tablero de Pinterest para inspirarse */
+export const DRESS_CODE = {
+  title: "Tonos veraniegos",
+  text: "Rosados, naranjas, amarillos y todo lo que se sienta a sol. Aquí tienes ideas del tablero de Nini.",
+  pinterestUser: "niniemuti",
+  pinterestBoard: "ninis-bday-party-25",
+  get boardUrl() {
+    return `https://www.pinterest.com/${this.pinterestUser}/${this.pinterestBoard}/`;
+  },
+  /** Cuántas fotos mostrar en la galería */
+  maxPins: 12,
+};

@@ -2,8 +2,10 @@
 import { useCallback, useRef, useState } from "react";
 import { MotionConfig } from "motion/react";
 import type { PublicGuest } from "@/lib/types";
+import type { Pin } from "@/lib/pinterest";
 import { Countdown } from "./Countdown";
 import { Details } from "./Details";
+import { DressCode } from "./DressCode";
 import { Envelope } from "./Envelope";
 import { Footer } from "./Footer";
 import { Hero } from "./Hero";
@@ -12,7 +14,7 @@ import { Music, startMusic } from "./Music";
 import { Rsvp } from "./Rsvp";
 import { Throwback } from "./Throwback";
 
-export function Invitation({ guest, invalidCode }: { guest: PublicGuest | null; invalidCode?: boolean }) {
+export function Invitation({ guest, invalidCode, pins = [] }: { guest: PublicGuest | null; invalidCode?: boolean; pins?: Pin[] }) {
   const [ready, setReady] = useState(false);
   const audioRef = useRef<HTMLAudioElement>(null);
 
@@ -40,6 +42,7 @@ export function Invitation({ guest, invalidCode }: { guest: PublicGuest | null; 
         <Throwback />
         <Marquee />
         <Details />
+        <DressCode pins={pins} />
         <Rsvp initialGuest={guest} invalidCode={invalidCode} />
       </main>
       <Footer />
