@@ -24,13 +24,11 @@ export function Details() {
             <article className="capsule">
               <div className="capsule__stripes" aria-hidden="true" />
               <div className="capsule__block">
-                <p className="capsule__label">Cuándo</p>
                 <p className="capsule__big">{EVENT.dateLabel}</p>
                 <p className="capsule__small">{EVENT.timeLabel} en punto</p>
               </div>
               <div className="capsule__divider" aria-hidden="true" />
               <div className="capsule__block">
-                <p className="capsule__label">Dónde</p>
                 <p className="capsule__big">{EVENT.venue.name}</p>
                 <p className="capsule__small">
                   {EVENT.venue.address}
