@@ -16,7 +16,7 @@ function parts(ms: number) {
 const TILES = [
   { key: "d", label: "Días", bg: "#c2345a", fg: "#fff4f1", rot: -3 },
   { key: "h", label: "Horas", bg: "#f5d98f", fg: "#9c2145", rot: 2 },
-  { key: "m", label: "Min", bg: "#fbf7f0", fg: "#e8801a", rot: -1.5 },
+  { key: "m", label: "Min", bg: "#ffe2d2", fg: "#c9650a", rot: -1.5 },
   { key: "s", label: "Seg", bg: "#ee8fa7", fg: "#3d1622", rot: 3 },
 ] as const;
 
@@ -37,7 +37,7 @@ export function Countdown() {
     <section className="section count" aria-labelledby="count-h">
       <div className="deco" style={{ top: 40, right: "6%", width: "clamp(70px, 14vw, 120px)" }}>
         <Reveal kind="slap" rotate={12}>
-          <Sticker name="fresa-disco" />
+          <Sticker name="durazno" />
         </Reveal>
       </div>
       <div className="deco" style={{ bottom: 30, left: "5%", width: "clamp(60px, 12vw, 100px)" }}>

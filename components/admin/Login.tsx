@@ -33,11 +33,11 @@ export function Login({ configured }: { configured: boolean }) {
   return (
     <MotionConfig reducedMotion="user">
       <main className="login">
-        <div className="deco" style={{ top: -6, left: -10, width: 180 }}>
-          <Sticker name="disco-esquina-rosa-top" eager />
+        <div className="deco" style={{ top: -30, left: -30, width: 170 }}>
+          <Sticker name="toronja" eager />
         </div>
-        <div className="deco" style={{ bottom: -6, right: -8, width: 220 }}>
-          <Sticker name="disco-esquina-plata" eager style={{ transform: "scaleX(-1)" }} />
+        <div className="deco" style={{ bottom: -20, right: -24, width: 210 }}>
+          <Sticker name="hibisco-naranja" eager />
         </div>
         <motion.div
           className="login__card"

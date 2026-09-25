@@ -3,14 +3,22 @@ import { body, condensed, script, serif } from "./fonts";
 import { EVENT } from "@/lib/event";
 import "./globals.css";
 
-const siteUrl =
-  process.env.NEXT_PUBLIC_SITE_URL ??
-  (process.env.VERCEL_PROJECT_PRODUCTION_URL ? `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` : "http://localhost:3000");
+function resolveSiteUrl() {
+  const raw = (process.env.NEXT_PUBLIC_SITE_URL || process.env.VERCEL_PROJECT_PRODUCTION_URL || "localhost:3000").trim();
+  const withProtocol = /^https?:\/\//i.test(raw) ? raw : `${raw.includes("localhost") ? "http" : "https"}://${raw}`;
+  try {
+    return new URL(withProtocol);
+  } catch {
+    return new URL("http://localhost:3000");
+  }
+}
+
+const siteUrl = resolveSiteUrl();
 
 const description = `${EVENT.dateLabel}, ${EVENT.timeLabel} en ${EVENT.venue.name}. Confirma tu asistencia.`;
 
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
+  metadataBase: siteUrl,
   title: `${EVENT.title} · ${EVENT.age}`,
   description,
   openGraph: {
@@ -27,7 +35,7 @@ export const metadata: Metadata = {
 };
 
 export const viewport: Viewport = {
-  themeColor: "#f0e9de",
+  themeColor: "#f6a3bb",
   width: "device-width",
   initialScale: 1,
   viewportFit: "cover",

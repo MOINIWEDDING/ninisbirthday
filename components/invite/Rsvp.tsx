@@ -200,7 +200,7 @@ function Form({ guest, onSaved, onAnswer }: { guest: PublicGuest; onSaved: (g: P
             setAnswer("yes");
             onAnswer("yes");
           }}>
-          <Sticker name="bola-disco" style={{ width: 34, height: 52 }} />
+          <Sticker name="naranja" />
           Ahí estaré
         </button>
         <button type="button" className="choice" aria-pressed={answer === "no"} onClick={() => {

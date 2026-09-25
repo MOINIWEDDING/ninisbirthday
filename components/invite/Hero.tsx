@@ -28,32 +28,38 @@ export function Hero({ guestName, ready }: { guestName?: string; ready: boolean 
 
   return (
     <header ref={ref} className="hero">
-      {/* Esquinas de bola disco, como en la referencia */}
-      <motion.div className="deco" style={{ top: -8, left: -10, width: "clamp(120px, 26vw, 220px)", y: ySlow }} {...pop(0.2)}>
-        <Sticker name="disco-esquina-rosa-top" eager />
-      </motion.div>
-      <motion.div className="deco" style={{ bottom: -6, left: -12, width: "clamp(150px, 30vw, 280px)", y: yDown }} {...pop(0.35)}>
-        <Sticker name="disco-esquina-plata" eager />
-      </motion.div>
-      <motion.div className="deco" style={{ bottom: -6, right: -8, width: "clamp(110px, 20vw, 190px)", y: ySlow }} {...pop(0.45)}>
-        <Sticker name="disco-esquina-rosa" eager />
-      </motion.div>
-
-      {/* Bola disco colgando que se balancea */}
+      {/* Sol de medianoche: disco cálido, rayos lentos y reflejo en el horizonte */}
       <motion.div
-        className="hanging-disco"
-        initial={reduce ? false : { y: -260 }}
-        animate={ready ? { y: 0 } : undefined}
-        transition={{ type: "spring", stiffness: 70, damping: 9, delay: 0.3 }}
+        className="sun"
+        aria-hidden="true"
+        style={{ y: yDown }}
+        initial={reduce ? false : { opacity: 0, scale: 0.6 }}
+        animate={ready ? { opacity: 1, scale: 1 } : undefined}
+        transition={{ duration: 1.6, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
       >
-        <motion.div
-          style={{ transformOrigin: "50% 0" }}
-          animate={reduce ? undefined : { rotate: [4, -4, 4] }}
-          transition={{ duration: 4.2, repeat: Infinity, ease: "easeInOut" }}
-        >
-          <Sticker name="bola-disco" eager alt="" />
-          <Glints />
-        </motion.div>
+        <span className="sun__rays" />
+        <span className="sun__halo" />
+        <motion.span
+          className="sun__disc"
+          animate={reduce ? undefined : { scale: [1, 1.035, 1] }}
+          transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+        />
+      </motion.div>
+      <div className="horizon" aria-hidden="true">
+        <span />
+        <span />
+        <span />
+      </div>
+
+      {/* Stickers de verano en las esquinas */}
+      <motion.div className="deco" style={{ top: -30, left: -34, width: "clamp(110px, 22vw, 190px)", y: ySlow }} {...pop(0.2)}>
+        <Sticker name="toronja" eager />
+      </motion.div>
+      <motion.div className="deco" style={{ bottom: -20, left: -30, width: "clamp(130px, 26vw, 230px)", y: yDown }} {...pop(0.35)}>
+        <Sticker name="hibisco-naranja" eager />
+      </motion.div>
+      <motion.div className="deco" style={{ bottom: -14, right: -20, width: "clamp(100px, 18vw, 170px)", y: ySlow }} {...pop(0.45)}>
+        <Sticker name="concha" eager />
       </motion.div>
 
       <Twinkle name="estrella-rosa" style={{ top: "22%", left: "58%", width: 58 }} delay={0} y={yFast} />
@@ -93,7 +99,7 @@ export function Hero({ guestName, ready }: { guestName?: string; ready: boolean 
             animate={ready ? { opacity: 1, y: 0 } : undefined}
             transition={{ duration: 0.7, ease: [0.16, 1, 0.3, 1], delay: 1.35 }}
           >
-            {EVENT.honoree} cumple {EVENT.age}. <b>{EVENT.dateLabel}, {EVENT.timeLabel}</b> en <b>{EVENT.venue.name}</b>.
+            <b>{EVENT.dateLabel}, {EVENT.timeLabel}</b> en <b>{EVENT.venue.name}</b>.
           </motion.p>
           <motion.div
             initial={reduce ? false : { opacity: 0, y: 16, scale: 0.9 }}
@@ -166,28 +172,5 @@ function Twinkle({
         <Sticker name={name} eager />
       </motion.div>
     </motion.div>
-  );
-}
-
-function Glints() {
-  const reduce = useReducedMotion();
-  if (reduce) return null;
-  const spots = [
-    { left: "30%", top: "58%", d: 0 },
-    { left: "62%", top: "72%", d: 0.9 },
-    { left: "48%", top: "86%", d: 1.7 },
-  ];
-  return (
-    <>
-      {spots.map((s, i) => (
-        <motion.span
-          key={i}
-          className="glint"
-          style={{ left: s.left, top: s.top }}
-          animate={{ scale: [0, 1.4, 0], rotate: [0, 45, 90], opacity: [0, 1, 0] }}
-          transition={{ duration: 1.6, delay: s.d, repeat: Infinity, repeatDelay: 1.2 }}
-        />
-      ))}
-    </>
   );
 }

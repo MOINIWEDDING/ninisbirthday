@@ -70,7 +70,7 @@ export function Envelope({ guestName, onOpened }: { guestName?: string; onOpened
                 animate={opening && !reduce ? { y: "-72%", rotate: -3 } : { y: 0 }}
                 transition={{ delay: 0.62, type: "spring", stiffness: 110, damping: 14 }}
               >
-                <img className="env__face" src="/nini/nini-2002.webp" alt="" width={585} height={481} />
+                <img className="env__face" src="/nini/nini-2002.webp" alt="" width={525} height={543} />
                 <span>
                   Nini’s
                   <small>25 · 24.10</small>

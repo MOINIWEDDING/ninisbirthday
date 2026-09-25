@@ -1,6 +1,6 @@
 /* Fotos de Nini de niña: recortadas, con borde de sticker y sombrerito de fiesta. */
 export const NINI_PHOTOS = {
-  "2002": { w: 585, h: 481, alt: "Nini bebé con su chupete", hat: "stripes", hatX: 0.57, hatY: 0.22, hatW: 0.32, hatRot: 12 },
+  "2002": { w: 525, h: 543, alt: "Nini bebé con su chupete", hat: "stripes", hatX: 0.6, hatY: 0.12, hatW: 0.4, hatRot: 16 },
   "2004": { w: 441, h: 565, alt: "Nini de pequeña, sonriendo", hat: "glitter", hatX: 0.6, hatY: 0.17, hatW: 0.46, hatRot: 16 },
   "2006": { w: 539, h: 431, alt: "Nini de niña posando con el brazo arriba", hat: "stars", hatX: 0.53, hatY: 0.19, hatW: 0.33, hatRot: 22 },
   "2010": { w: 252, h: 702, alt: "Nini de niña posando en la calle", hat: "glitter", hatX: 0.42, hatY: 0.075, hatW: 0.46, hatRot: 14 },

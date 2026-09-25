@@ -199,7 +199,7 @@ export function Dashboard({ storageReady }: { storageReady: boolean }) {
         <div className="admin__wrap">
           <nav className="admin__bar" aria-label="Panel">
             <div className="admin__brand">
-              <Sticker name="bola-disco" eager style={{ width: 24 }} />
+              <Sticker name="toronja" eager style={{ width: 28 }} />
               <b>Nini’s</b>
               <span>Panel</span>
             </div>
@@ -316,7 +316,7 @@ export function Dashboard({ storageReady }: { storageReady: boolean }) {
               </div>
             ) : visible.length === 0 ? (
               <div className="empty">
-                <Sticker name="fresa-disco" />
+                <Sticker name="durazno" />
                 <b>{guests.length === 0 ? "La lista está vacía" : "Nadie por aquí"}</b>
                 <span>{guests.length === 0 ? "Agrega el primer invitado arriba y comparte su enlace." : "Prueba con otro filtro o búsqueda."}</span>
               </div>

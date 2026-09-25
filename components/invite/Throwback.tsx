@@ -1,5 +1,4 @@
 "use client";
-import { motion, useReducedMotion } from "motion/react";
 import { Sticker } from "@/components/Sticker";
 import type { NiniPhotoId } from "@/lib/nini";
 import { NiniPhoto } from "./NiniPhoto";
@@ -14,7 +13,6 @@ const ITEMS: { id: NiniPhotoId; tilt: number; w: string }[] = [
 ];
 
 export function Throwback() {
-  const reduce = useReducedMotion();
   return (
     <section className="section throw" aria-labelledby="throw-h">
       <div className="deco" style={{ top: 30, left: "6%", width: 60 }}>
@@ -37,16 +35,6 @@ export function Throwback() {
           {ITEMS.map((it, i) => (
             <li key={it.id} className="throw__item">
               <NiniPhoto id={it.id} width={it.w} tilt={it.tilt} delay={0.1 * i} style={{ margin: "0 auto" }} />
-              <motion.span
-                className="year"
-                style={{ rotate: i % 2 ? 4 : -4 }}
-                initial={reduce ? false : { opacity: 0, y: 14 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: 0.25 + 0.1 * i, type: "spring", stiffness: 220, damping: 16 }}
-              >
-                {it.id}
-              </motion.span>
             </li>
           ))}
         </ul>
