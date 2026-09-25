@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { MotionConfig } from "motion/react";
 import type { PublicGuest } from "@/lib/types";
 import { Countdown } from "./Countdown";
@@ -8,13 +8,17 @@ import { Envelope } from "./Envelope";
 import { Footer } from "./Footer";
 import { Hero } from "./Hero";
 import { Marquee } from "./Marquee";
+import { Music, startMusic } from "./Music";
 import { Rsvp } from "./Rsvp";
 import { Throwback } from "./Throwback";
 
 export function Invitation({ guest, invalidCode }: { guest: PublicGuest | null; invalidCode?: boolean }) {
   const [ready, setReady] = useState(false);
+  const audioRef = useRef<HTMLAudioElement>(null);
 
   const onOpened = useCallback(() => {
+    // La música arranca aquí mismo, dentro del toque al sobre (así el navegador la permite)
+    startMusic(audioRef.current);
     // Deja que el sobre termine su animación antes de lanzar el hero
     window.setTimeout(() => setReady(true), 900);
     if (guest) {
@@ -39,6 +43,7 @@ export function Invitation({ guest, invalidCode }: { guest: PublicGuest | null; 
         <Rsvp initialGuest={guest} invalidCode={invalidCode} />
       </main>
       <Footer />
+      <Music audioRef={audioRef} visible={ready} />
     </MotionConfig>
   );
 }
