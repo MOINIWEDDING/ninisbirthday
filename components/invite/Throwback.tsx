@@ -8,7 +8,9 @@ const ITEMS: { id: NiniPhotoId; tilt: number; w: string }[] = [
   { id: "2002", tilt: -6, w: "100%" },
   { id: "2004", tilt: 5, w: "86%" },
   { id: "2006", tilt: -3, w: "100%" },
-  { id: "2010", tilt: 4, w: "58%" },
+  { id: "2008", tilt: 3, w: "86%" },
+  { id: "2009", tilt: -4, w: "90%" },
+  { id: "2010", tilt: 4, w: "50%" },
   { id: "2011", tilt: -5, w: "96%" },
 ];
 
