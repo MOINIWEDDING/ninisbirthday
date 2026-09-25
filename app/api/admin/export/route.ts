@@ -13,9 +13,9 @@ export async function GET(req: Request) {
     const guests = await listGuests();
     const esc = (v: unknown) => `"${String(v ?? "").replace(/"/g, '""')}"`;
     const rows = [
-      ["Nombre", "Estado", "Personas que asisten", "Lugares", "Teléfono", "Nota", "Mensaje", "Código", "Enlace", "Abrió", "Respondió"],
+      ["Nombre", "Acompañantes", "Estado", "Personas que asisten", "Lugares", "Teléfono", "Nota", "Mensaje", "Código", "Enlace", "Abrió", "Respondió"],
       ...guests.map((g) => [
-        g.name, LABEL[g.status], g.status === "yes" ? g.attending : 0, g.seats, g.phone, g.note, g.message,
+        g.name, (g.companions ?? []).filter(Boolean).join(", "), LABEL[g.status], g.status === "yes" ? g.attending : 0, g.seats, g.phone, g.note, g.message,
         g.code, `${origin}/i/${g.code}`, g.openedAt ?? "", g.respondedAt ?? "",
       ]),
     ];

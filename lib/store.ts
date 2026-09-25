@@ -38,6 +38,7 @@ type Row = {
   code: string;
   name: string;
   seats: number;
+  companions: string[] | null;
   phone: string | null;
   note: string | null;
   status: RsvpStatus;
@@ -56,6 +57,7 @@ function fromRow(r: Row): Guest {
     code: r.code,
     name: r.name,
     seats: r.seats,
+    companions: r.companions ?? [],
     phone: u(r.phone),
     note: u(r.note),
     status: r.status,
@@ -73,6 +75,7 @@ function toRow(x: Guest): Row {
     code: x.code,
     name: x.name,
     seats: x.seats,
+    companions: x.companions ?? [],
     phone: x.phone ?? null,
     note: x.note ?? null,
     status: x.status,
@@ -87,7 +90,10 @@ function toRow(x: Guest): Row {
 function check<T>(res: { data: T; error: { message: string; code?: string } | null }): T {
   if (res.error) {
     if (res.error.code === "42P01" || /relation .* does not exist|Could not find the table/i.test(res.error.message)) {
-      throw new Error("La tabla 'guests' no existe en Supabase. Ejecuta supabase/schema.sql en el SQL Editor.");
+      throw new Error("Falta actualizar la base de datos en Supabase. En el SQL Editor ejecuta supabase/actualizacion-2.sql (o schema.sql si es un proyecto nuevo).");
+    }
+    if (/companions|column .* does not exist/i.test(res.error.message)) {
+      throw new Error("La tabla necesita la columna nueva de acompañantes. Ejecuta supabase/actualizacion-2.sql en el SQL Editor.");
     }
     throw new Error(`Supabase: ${res.error.message}`);
   }
@@ -101,6 +107,27 @@ export async function listGuests(): Promise<Guest[]> {
     return (rows as Row[]).map(fromRow);
   }
   return [...mem.values()].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
+
+/* ---------- Ajustes (mensaje de WhatsApp) ---------- */
+const memSettings: Map<string, string> = ((globalThis as unknown as { __niniSet?: Map<string, string> }).__niniSet ??= new Map());
+
+export async function getSetting(key: string): Promise<string | null> {
+  assertStorage();
+  if (sb) {
+    const row = check(await sb.from("settings").select("value").eq("key", key).maybeSingle());
+    return row ? (row as { value: string }).value : null;
+  }
+  return memSettings.get(key) ?? null;
+}
+
+export async function setSetting(key: string, value: string): Promise<void> {
+  assertStorage();
+  if (sb) {
+    check(await sb.from("settings").upsert({ key, value, updated_at: new Date().toISOString() }, { onConflict: "key" }).select("key"));
+    return;
+  }
+  memSettings.set(key, value);
 }
 
 export async function getGuest(id: string): Promise<Guest | null> {

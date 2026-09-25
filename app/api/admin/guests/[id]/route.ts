@@ -1,6 +1,7 @@
 import { clampInt, cleanText, fail, handleError, json, readJson, requireAdmin } from "@/lib/http";
 import { deleteGuest, getGuest, saveGuest } from "@/lib/store";
 import type { Guest, RsvpStatus } from "@/lib/types";
+import { cleanCompanions } from "@/lib/message";
 
 type Ctx = { params: Promise<{ id: string }> };
 
@@ -29,6 +30,7 @@ export async function PATCH(req: Request, { params }: Ctx) {
     if (body.attending !== undefined && next.status === "yes") {
       next.attending = clampInt(body.attending, 1, next.seats, next.seats);
     }
+    next.companions = cleanCompanions(body.companions !== undefined ? body.companions : guest.companions, next.seats);
     next.attending = Math.min(next.attending, next.seats);
     return json({ guest: await saveGuest(next) });
   } catch (e) {

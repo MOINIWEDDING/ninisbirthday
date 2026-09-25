@@ -192,7 +192,7 @@ function Form({ guest, onSaved, onAnswer }: { guest: PublicGuest; onSaved: (g: P
     <form onSubmit={submit} noValidate>
       <p className="ticket__hello">Hola, {first}</p>
       <p className="ticket__lead">
-        {guest.seats > 1 ? `Esta invitación es para ${guest.seats} personas.` : "Esta invitación es para ti."} Cuéntanos si vienes.
+        {inviteLead(guest)} Cuéntanos si vienes.
       </p>
 
       <div className="choices" role="group" aria-label="¿Asistirás?">
@@ -293,4 +293,14 @@ function Done({ guest, onChange }: { guest: PublicGuest; onChange: () => void })
       </button>
     </div>
   );
+}
+
+function inviteLead(guest: PublicGuest) {
+  if (guest.seats <= 1) return "Esta invitación es para ti.";
+  const named = (guest.companions ?? []).filter(Boolean);
+  const extra = guest.seats - 1;
+  if (!named.length) return `Puedes venir con ${extra} ${extra === 1 ? "persona" : "personas"}.`;
+  const rest = extra - named.length;
+  const list = named.length > 1 ? `${named.slice(0, -1).join(", ")} y ${named[named.length - 1]}` : named[0];
+  return rest > 0 ? `Puedes venir con ${list} y ${rest} ${rest === 1 ? "persona más" : "personas más"}.` : `Puedes venir con ${list}.`;
 }

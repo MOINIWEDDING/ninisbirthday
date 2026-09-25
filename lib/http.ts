@@ -18,7 +18,7 @@ export async function requireAdmin() {
 export function handleError(err: unknown) {
   if (err instanceof StorageNotConfiguredError) return fail(err.message, 503);
   console.error(err);
-  if (err instanceof Error && err.message.startsWith("La tabla")) return fail(err.message, 503);
+  if (err instanceof Error && /^(La tabla|Falta actualizar)/.test(err.message)) return fail(err.message, 503);
   return fail("Algo salió mal. Intenta de nuevo.", 500);
 }
 

@@ -1,6 +1,7 @@
 import { clampInt, cleanText, fail, handleError, json, readJson, requireAdmin } from "@/lib/http";
 import { listGuests, newCode, newId, saveGuest } from "@/lib/store";
 import type { Guest } from "@/lib/types";
+import { cleanCompanions } from "@/lib/message";
 
 export const dynamic = "force-dynamic";
 
@@ -14,7 +15,7 @@ export async function GET() {
   }
 }
 
-type NewGuest = { name?: string; seats?: number; phone?: string; note?: string };
+type NewGuest = { name?: string; seats?: number; phone?: string; note?: string; companions?: string[] };
 
 export async function POST(req: Request) {
   const denied = await requireAdmin();
@@ -27,11 +28,13 @@ export async function POST(req: Request) {
     for (const e of entries) {
       const name = cleanText(e.name, 80);
       if (!name) continue;
+      const seats = clampInt(e.seats, 1, 10, 1);
       const guest: Guest = {
         id: newId(),
         code: await newCode(),
         name,
-        seats: clampInt(e.seats, 1, 10, 1),
+        seats,
+        companions: cleanCompanions(e.companions, seats),
         phone: cleanText(e.phone, 30),
         note: cleanText(e.note, 140),
         status: "pending",

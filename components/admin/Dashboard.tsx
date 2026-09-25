@@ -20,7 +20,9 @@ import {
   WhatsappLogo,
 } from "@phosphor-icons/react";
 import { Sticker } from "@/components/Sticker";
-import { EVENT } from "@/lib/event";
+import { EVENT, GUEST_LIMIT, GUEST_WARN_AT } from "@/lib/event";
+import { DEFAULT_TEMPLATE, companionsLine, renderMessage } from "@/lib/message";
+import { CompanionFields, Crash, LimitAlert, LimitMeter, MessageEditor } from "./Extras";
 import type { Guest, RsvpStatus } from "@/lib/types";
 
 type Filter = "all" | RsvpStatus;
@@ -46,12 +48,8 @@ function inviteLink(code: string) {
   return `${window.location.origin}/i/${code}`;
 }
 
-function whatsappUrl(g: Guest) {
-  const first = g.name.split(" ")[0];
-  const text =
-    `¡Hola ${first}! Estás invitad@ a ${EVENT.title}, los ${EVENT.age} de Nicole. ` +
-    `${EVENT.dateLabel}, ${EVENT.timeLabel} en ${EVENT.venue.name}. ` +
-    `Abre tu invitación y confirma aquí: ${inviteLink(g.code)}`;
+function whatsappUrl(g: Guest, template: string) {
+  const text = renderMessage(template, g, inviteLink(g.code));
   let digits = (g.phone ?? "").replace(/\D/g, "");
   if (digits.length === 10 && /^(809|829|849)/.test(digits)) digits = `1${digits}`;
   return `https://wa.me/${digits}?text=${encodeURIComponent(text)}`;
@@ -74,6 +72,10 @@ export function Dashboard({ storageReady }: { storageReady: boolean }) {
   const [editing, setEditing] = useState<Guest | null>(null);
   const [removing, setRemoving] = useState<Guest | null>(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [template, setTemplate] = useState(DEFAULT_TEMPLATE);
+  const [editingMessage, setEditingMessage] = useState(false);
+  const [limitAlert, setLimitAlert] = useState<number | null>(null);
+  const [crashed, setCrashed] = useState(false);
 
   const notify = useCallback((msg: string) => {
     setToast(msg);
@@ -101,6 +103,17 @@ export function Dashboard({ storageReady }: { storageReady: boolean }) {
       setRefreshing(false);
     }
   }, [handleAuth]);
+
+  useEffect(() => {
+    api<{ template: string }>("/api/admin/settings")
+      .then((d) => setTemplate(d.template))
+      .catch(() => {});
+  }, []);
+
+  /** Si después de un cambio el total subió y ya está cerca del tope, salta el aviso */
+  const checkLimit = useCallback((before: number, after: number) => {
+    if (after > before && after >= GUEST_WARN_AT) setLimitAlert(after);
+  }, []);
 
   useEffect(() => {
     load();
@@ -159,11 +172,28 @@ export function Dashboard({ storageReady }: { storageReady: boolean }) {
     }
   }
 
+  async function saveMessage(next: string | null) {
+    try {
+      const d = await api<{ template: string }>("/api/admin/settings", {
+        method: "PUT",
+        body: JSON.stringify(next === null ? { reset: true } : { template: next }),
+      });
+      setTemplate(d.template);
+      setEditingMessage(false);
+      notify("Mensaje guardado");
+      return null;
+    } catch (err) {
+      handleAuth(err);
+      return err instanceof Error ? err.message : "No se pudo guardar";
+    }
+  }
+
   async function saveEdit(patch: Partial<Guest>) {
     if (!editing) return;
     try {
       const { guest } = await api<{ guest: Guest }>(`/api/admin/guests/${editing.id}`, { method: "PATCH", body: JSON.stringify(patch) });
       setGuests((list) => (list ?? []).map((g) => (g.id === guest.id ? guest : g)));
+      checkLimit(stats.seats, stats.seats - editing.seats + guest.seats);
       setEditing(null);
       notify("Cambios guardados");
     } catch (err) {
@@ -228,13 +258,19 @@ export function Dashboard({ storageReady }: { storageReady: boolean }) {
           )}
 
           <section className="stats" aria-label="Resumen">
-            <motion.div className="stat stat--hero" initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+            <motion.div
+              className={`stat stat--hero ${stats.seats >= GUEST_WARN_AT ? "stat--warn" : ""}`}
+              initial={{ opacity: 0, y: 14 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
               <div>
                 <div className="stat__num">
-                  {guests ? stats.people : "…"}
-                  <span style={{ fontSize: "1.3rem", opacity: 0.8 }}> / {guests ? stats.seats : "…"}</span>
+                  {guests ? stats.seats : "…"}
+                  <span className="stat__limit"> / {GUEST_LIMIT}</span>
                 </div>
-                <div className="stat__label">Personas confirmadas</div>
+                <div className="stat__label">Personas invitadas, con acompañantes</div>
+                <LimitMeter total={guests ? stats.seats : 0} />
               </div>
               <span style={{ display: "flex" }}>
                 <Sticker name="globo-2" eager style={{ width: 38 }} />
@@ -242,8 +278,8 @@ export function Dashboard({ storageReady }: { storageReady: boolean }) {
               </span>
             </motion.div>
             {[
+              { n: stats.people, l: "Personas confirmadas" },
               { n: stats.invites, l: "Invitaciones" },
-              { n: stats.yes, l: "Asisten" },
               { n: stats.pending, l: "Pendientes" },
               { n: stats.opened, l: "Abrieron el sobre" },
             ].map((s, i) => (
@@ -263,6 +299,7 @@ export function Dashboard({ storageReady }: { storageReady: boolean }) {
           <AddGuests
             onAdded={(created) => {
               setGuests((list) => [...created, ...(list ?? [])]);
+              checkLimit(stats.seats, stats.seats + created.reduce((n, g) => n + g.seats, 0));
               notify(created.length === 1 ? `${created[0].name} agregad@` : `${created.length} invitados agregados`);
             }}
             onAuthError={handleAuth}
@@ -271,7 +308,11 @@ export function Dashboard({ storageReady }: { storageReady: boolean }) {
           <section className="panel" aria-labelledby="list-h">
             <div className="panel__head">
               <h2 id="list-h">Lista</h2>
-              <div style={{ display: "flex", gap: 4 }}>
+              <div style={{ display: "flex", gap: 4, flexWrap: "wrap" }}>
+                <button className="iconbtn" type="button" onClick={() => setEditingMessage(true)} title="Editar el mensaje de WhatsApp">
+                  <ChatCircleText size={18} />
+                  Mensaje
+                </button>
                 <button className="iconbtn" type="button" onClick={load} disabled={refreshing} title="Actualizar">
                   <motion.span animate={refreshing ? { rotate: 360 } : { rotate: 0 }} transition={{ repeat: refreshing ? Infinity : 0, duration: 0.8, ease: "linear" }} style={{ display: "inline-flex" }}>
                     <ArrowClockwise size={18} />
@@ -335,6 +376,7 @@ export function Dashboard({ storageReady }: { storageReady: boolean }) {
                     >
                       <div>
                         <div className="grow__name">{g.name}</div>
+                        {g.seats > 1 && <div className="grow__plus">{companionsLine(g.seats, g.companions).replace("Puedes venir con", "+").replace("+:", "+")}</div>}
                         <div className="grow__meta">
                           <span>Código {g.code}</span>
                           {g.phone && (
@@ -371,7 +413,7 @@ export function Dashboard({ storageReady }: { storageReady: boolean }) {
                         </button>
                         <a
                           className="iconbtn"
-                          href={whatsappUrl(g)}
+                          href={whatsappUrl(g, template)}
                           target="_blank"
                           rel="noopener noreferrer"
                           title="Enviar por WhatsApp"
@@ -401,6 +443,28 @@ export function Dashboard({ storageReady }: { storageReady: boolean }) {
         </div>
 
         <AnimatePresence>
+          {editingMessage && (
+            <MessageEditor
+              key="msg"
+              initial={template}
+              sample={
+                guests?.find((g) => g.seats > 1) ?? guests?.[0] ?? { name: "Camila Rosario", code: "3F6KJV", seats: 2, companions: ["Andrés"] }
+              }
+              onClose={() => setEditingMessage(false)}
+              onSave={saveMessage}
+            />
+          )}
+          {limitAlert !== null && (
+            <LimitAlert
+              key="limit"
+              total={limitAlert}
+              onAsh={() => setLimitAlert(null)}
+              onOk={() => {
+                setLimitAlert(null);
+                setCrashed(true);
+              }}
+            />
+          )}
           {editing && <EditDialog key="edit" guest={editing} onClose={() => setEditing(null)} onSave={saveEdit} />}
           {removing && (
             <Dialog key="rm" onClose={() => setRemoving(null)} label="Eliminar invitado">
@@ -430,6 +494,7 @@ export function Dashboard({ storageReady }: { storageReady: boolean }) {
           )}
         </AnimatePresence>
       </main>
+      {crashed && <Crash />}
     </MotionConfig>
   );
 }
@@ -454,6 +519,7 @@ function AddGuests({ onAdded, onAuthError }: { onAdded: (g: Guest[]) => void; on
   const [seats, setSeats] = useState(1);
   const [phone, setPhone] = useState("");
   const [note, setNote] = useState("");
+  const [companions, setCompanions] = useState<string[]>([]);
   const [bulk, setBulk] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -465,8 +531,8 @@ function AddGuests({ onAdded, onAuthError }: { onAdded: (g: Guest[]) => void; on
         .map((l) => l.trim())
         .filter(Boolean)
         .map((line) => {
-          const [n, s, p] = line.split(/[,;\t]/).map((x) => x.trim());
-          return { name: n, seats: Number(s) || 1, phone: p };
+          const [n, s, p, c] = line.split(/[,;\t]/).map((x) => x.trim());
+          return { name: n, seats: Number(s) || 1, phone: p, companions: (c ?? "").split("/").map((x) => x.trim()) };
         })
         .filter((g) => g.name),
     [bulk],
@@ -475,7 +541,7 @@ function AddGuests({ onAdded, onAuthError }: { onAdded: (g: Guest[]) => void; on
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setError("");
-    const body = mode === "one" ? { name, seats, phone, note } : { bulk: parsedBulk };
+    const body = mode === "one" ? { name, seats, phone, note, companions } : { bulk: parsedBulk };
     if (mode === "one" && !name.trim()) return setError("Escribe el nombre.");
     if (mode === "many" && !parsedBulk.length) return setError("Pega al menos un nombre.");
     setBusy(true);
@@ -486,6 +552,7 @@ function AddGuests({ onAdded, onAuthError }: { onAdded: (g: Guest[]) => void; on
       setSeats(1);
       setPhone("");
       setNote("");
+      setCompanions([]);
       setBulk("");
     } catch (err) {
       onAuthError(err);
@@ -531,6 +598,7 @@ function AddGuests({ onAdded, onAuthError }: { onAdded: (g: Guest[]) => void; on
               <UserPlus size={20} weight="bold" />
               {busy ? "Agregando…" : "Agregar"}
             </button>
+            <CompanionFields seats={seats} value={companions} onChange={setCompanions} idPrefix="add" />
           </div>
         ) : (
           <div className="addform">
@@ -542,11 +610,11 @@ function AddGuests({ onAdded, onAuthError }: { onAdded: (g: Guest[]) => void; on
                 style={{ minHeight: 150 }}
                 value={bulk}
                 onChange={(e) => setBulk(e.target.value)}
-                placeholder={"Camila Rosario, 2, 8095550123\nAndrés Peña\nLuisa y Marcos Tavárez, 2"}
+                placeholder={"Camila Rosario, 2, 8095550123, Andrés\nAndrés Peña\nLuisa Tavárez, 3, , Marcos / Ana"}
                 aria-describedby="bulk-help"
               />
               <p id="bulk-help" className="field__help">
-                Formato: nombre, lugares, WhatsApp. Solo el nombre es obligatorio. {parsedBulk.length > 0 && `Se agregarán ${parsedBulk.length}.`}
+                Formato: nombre, lugares, WhatsApp, acompañantes separados con /. Solo el nombre es obligatorio. {parsedBulk.length > 0 && `Se agregarán ${parsedBulk.length}.`}
               </p>
             </div>
             <div>
@@ -602,6 +670,7 @@ function EditDialog({ guest, onClose, onSave }: { guest: Guest; onClose: () => v
   const [seats, setSeats] = useState(guest.seats);
   const [phone, setPhone] = useState(guest.phone ?? "");
   const [note, setNote] = useState(guest.note ?? "");
+  const [companions, setCompanions] = useState<string[]>(guest.companions ?? []);
   const [status, setStatus] = useState<RsvpStatus>(guest.status);
   const [attending, setAttending] = useState(guest.status === "yes" ? guest.attending : guest.seats);
   const [busy, setBusy] = useState(false);
@@ -609,7 +678,7 @@ function EditDialog({ guest, onClose, onSave }: { guest: Guest; onClose: () => v
   async function submit(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true);
-    await onSave({ name, seats, phone, note, status, attending: Math.min(attending, seats) });
+    await onSave({ name, seats, phone, note, companions, status, attending: Math.min(attending, seats) });
     setBusy(false);
   }
 
@@ -625,6 +694,7 @@ function EditDialog({ guest, onClose, onSave }: { guest: Guest; onClose: () => v
           <span className="field__label">Lugares</span>
           <Stepper value={seats} onChange={setSeats} label="Lugares" />
         </div>
+        <CompanionFields seats={seats} value={companions} onChange={setCompanions} idPrefix="edit" />
         <div className="field">
           <label htmlFor="e-phone">WhatsApp</label>
           <input id="e-phone" className="input" type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} />

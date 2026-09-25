@@ -61,3 +61,8 @@ export function buildIcs(url: string) {
     "END:VCALENDAR",
   ].join("\r\n");
 }
+
+/** Tope de personas (contando acompañantes). Al acercarse, el panel avisa. */
+export const GUEST_LIMIT = 20;
+/** A partir de cuántas personas salta el aviso */
+export const GUEST_WARN_AT = GUEST_LIMIT - 2;
